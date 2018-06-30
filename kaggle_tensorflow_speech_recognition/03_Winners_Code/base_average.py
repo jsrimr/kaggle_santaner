@@ -23,7 +23,7 @@ vgg1d_raw = pd.read_csv("pred_scores/vgg1d_raw.csv", index_col=-1)
 
 fname = vgg1d_raw.index
 
-"""Weights were determined by using public LB feedback"""
+# 가중 평균 비율은 Public 리더보드의 점수를 기반으로 결정되었다.
 result = (dense_mel.as_matrix() * 0.6 + dense_mfcc.as_matrix() * 0.4) * 0.15 + \
         (resnet_mel.as_matrix() * 0.6 + resnet_mfcc.as_matrix() * 0.4) * 0.15 + \
         (senet_mel.as_matrix() * 0.6 + senet_mfcc.as_matrix() * 0.4) * 0.15 + \

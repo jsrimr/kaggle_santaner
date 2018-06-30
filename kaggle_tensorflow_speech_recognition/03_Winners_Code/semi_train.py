@@ -11,23 +11,25 @@ from data import preprocess_mel, preprocess_mfcc, preprocess_wav
 list_2d = [('mel', preprocess_mel), ('mfcc', preprocess_mfcc)]
 BAGGING_NUM=3
 
-
+# 모델 학습을 실행하는 함수이다.
 def train_and_predict(cfg_dict, preprocess_list):
     for p, preprocess_fun in preprocess_list:
         cfg = cfg_dict.copy()
         cfg['preprocess_fun'] = preprocess_fun
         cfg['CODER'] += '_%s' %p
         cfg['bagging_num'] = BAGGING_NUM
+        # 테스트 데이터에 대한 예측값 경로를 지정한다
         cfg['semi_train_path'] = "sub/base_average.csv"
         print("training ", cfg['CODER'])
         train_model(**cfg)
 
-
+# Semi-Supervised 학습을 위한 설정값이다.
 res_config = {
     'model_class': ResModel,
     'is_1d': False,
     'reshape_size': None,
     'BATCH_SIZE': 32,
+    # 모델 학습 epoch을 125로 늘렸다.
     'epochs': 125,
     'CODER': 'resnet_semi'
 }

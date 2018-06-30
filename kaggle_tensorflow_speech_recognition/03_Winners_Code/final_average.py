@@ -20,7 +20,7 @@ base_model = pd.read_csv("pred_scores/base_average.csv", index_col=-1)
 
 fname = vgg1d_semi_raw.index
 
-"""Weights were determined by using public LB feedback"""
+# Public 리더보드 점수를 기반으로 최적의 가중 평균 비율을 선별했다.
 result = (resnet_semi_mel.as_matrix() * 0.5 + resnet_semi_mfcc.as_matrix() * 0.5) * 0.1 + \
         (senet_semi_mel.as_matrix() * 0.4 + senet_semi_mfcc.as_matrix() * 0.6) * 0.2 + \
         (vgg2d_semi_mel.as_matrix() * 0.6 + vgg2d_semi_mfcc.as_matrix() * 0.4) * 0.15 + \

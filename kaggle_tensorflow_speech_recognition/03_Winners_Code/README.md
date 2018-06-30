@@ -1,6 +1,6 @@
-## How to reproduce
+## 승자의 코드 재현하기
 
-First make sure that the training and test data are put in `../input/`
+`../input/`에 훈련 데이터와 테스트 데이터를 위치한다.
 
 ```
 python train.py
@@ -10,10 +10,4 @@ python finetune_train.py
 python final_average.py
 ```
 
-And then you will be able to find the submission in `sub/final_average.csv`
-
-## Solution Document
-
-Please see details in `solution.pdf`
-
-
+`sub/final_average.csv` 파일이 생성됩니다.

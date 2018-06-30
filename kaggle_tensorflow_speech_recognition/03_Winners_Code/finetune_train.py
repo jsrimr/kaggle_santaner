@@ -33,7 +33,8 @@ se_pretrain = {
 }
 
 print("pretrain senet..........")
-#train_and_predict(se_pretrain, [('mel', preprocess_mel)])
+# 테스트 데이터를 기반으로 기학습(pre-trained) 모델을 생성한다.
+train_and_predict(se_pretrain, [('mel', preprocess_mel)])
 
 vgg1d_pretrain = {
     'model_class': vgg1d,
@@ -47,7 +48,7 @@ vgg1d_pretrain = {
 }
 
 print("pretrain vgg1d on raw features..........")
-#train_and_predict(vgg1d_pretrain, [('raw', preprocess_wav)])
+train_and_predict(vgg1d_pretrain, [('raw', preprocess_wav)])
 
 
 print("################################################")
@@ -64,6 +65,7 @@ se_config = {
 }
 
 print("train senet..........")
+# 기학습 모델에서 1 epoch만큼 fine-tuning을 수행한다.
 train_and_predict(se_config, [('mel', preprocess_mel)])
 
 vgg1d_config = {

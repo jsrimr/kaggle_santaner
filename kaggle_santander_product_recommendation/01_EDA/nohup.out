@@ -1,0 +1,19 @@
+[W 00:58:23.392 NotebookApp] WARNING: The notebook server is listening on all IP addresses and not using encryption. This is not recommended.
+[I 00:58:23.426 NotebookApp] Serving notebooks from local directory: /home1/irteam/users/kweonwooj/kaggle/book/kaggle_santander_product_recommendation/01_EDA
+[I 00:58:23.426 NotebookApp] 0 active kernels
+[I 00:58:23.426 NotebookApp] The Jupyter Notebook is running at:
+[I 00:58:23.426 NotebookApp] http://[all ip addresses on your system]:8888/
+[I 00:58:23.426 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[W 00:58:28.477 NotebookApp] 404 GET /nbextensions/widgets/notebook/js/extension.js (10.25.208.75) 8.34ms referer=http://10.110.225.140:8888/notebooks/EDA.ipynb
+[I 00:58:29.812 NotebookApp] Kernel started: 96c42c96-9627-46ce-adbe-1d2ae01c5c78
+[I 00:58:30.551 NotebookApp] Adapting to protocol v5.1 for kernel 96c42c96-9627-46ce-adbe-1d2ae01c5c78
+[I 00:58:42.258 NotebookApp] Starting buffering for 96c42c96-9627-46ce-adbe-1d2ae01c5c78:537029F8377341148382E93576BD7257
+[W 01:06:08.404 NotebookApp] 404 GET /nbextensions/widgets/notebook/js/extension.js (10.25.208.75) 1.22ms referer=http://10.110.225.140:8888/notebooks/EDA.ipynb
+[I 01:06:09.587 NotebookApp] Adapting to protocol v5.1 for kernel 96c42c96-9627-46ce-adbe-1d2ae01c5c78
+[I 01:06:25.005 NotebookApp] Starting buffering for 96c42c96-9627-46ce-adbe-1d2ae01c5c78:8AED150AE0B445F880026A8D78C96097
+[W 01:09:34.223 NotebookApp] 404 GET /nbextensions/widgets/notebook/js/extension.js (10.25.208.75) 1.22ms referer=http://10.110.225.140:8888/notebooks/EDA.ipynb
+[I 01:09:35.609 NotebookApp] Adapting to protocol v5.1 for kernel 96c42c96-9627-46ce-adbe-1d2ae01c5c78
+[I 01:10:00.885 NotebookApp] Saving file at /EDA.ipynb
+[I 01:10:01.637 NotebookApp] Saving file at /EDA.ipynb
+[I 01:10:02.072 NotebookApp] Saving file at /EDA.ipynb
+[I 01:10:02.203 NotebookApp] Starting buffering for 96c42c96-9627-46ce-adbe-1d2ae01c5c78:2D0C91C1E6C24AE38C8B90E310F4C7C8

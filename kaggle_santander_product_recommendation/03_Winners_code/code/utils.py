@@ -20,19 +20,20 @@ class Timer:
         if self.text:
             print("%s: cpu %0.2f, time %0.2f\n" % (self.text, self.cpu, self.time))
 
-def date_to_int(str_date):
-    Y, M, D = [int(a) for a in str_date.strip().split("-")] # "2016-05-28"
-    int_date = (int(Y) - 2015) * 12 + int(M)
-    assert 1 <= int_date <= 12 + 6
-    return int_date
-
-# "2016-05-28" or "" or nan
+# 날짜 데이터를 월 단위 숫자로 변환하는 함수
 def date_to_float(str_date):
     if str_date.__class__ is float and math.isnan(str_date) or str_date == "":
         return np.nan
     Y, M, D = [int(a) for a in str_date.strip().split("-")]
     float_date = float(Y) * 12 + float(M)
     return float_date
+
+# 날짜 데이터를 월 단위 숫자로 변환하되 1~18 사이로 제한하는 함수
+def date_to_int(str_date):
+    Y, M, D = [int(a) for a in str_date.strip().split("-")] # "2016-05-28"
+    int_date = (int(Y) - 2015) * 12 + int(M)
+    assert 1 <= int_date <= 12 + 6
+    return int_date
 
 
 products = (

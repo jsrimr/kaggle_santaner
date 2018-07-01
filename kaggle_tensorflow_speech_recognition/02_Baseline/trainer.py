@@ -132,39 +132,38 @@ for e in range(epochs):
 create_directory("model")
 torch.save(speechmodel.state_dict(), model_name)
 
-if mode != 'cv':
-    # 테스트 데이터에 대한 예측값을 파일에 저장한다
-    print("doing prediction...")
-    softmax = Softmax()
+# 테스트 데이터에 대한 예측값을 파일에 저장한다
+print("doing prediction...")
+softmax = Softmax()
 
-    # 테스트 데이터를 불러온다
-    tst = [line.strip() for line in open(tst, 'r').readlines()]
-    wav_list = [line.split(',')[-1] for line in tst]
-    testdataset = SpeechDataset(mode='test', label_to_int=label_to_int, wav_list=wav_list)
-    testloader = DataLoader(testdataset, BATCH_SIZE, shuffle=False)
+# 테스트 데이터를 불러온다
+tst = [line.strip() for line in open(tst, 'r').readlines()]
+wav_list = [line.split(',')[-1] for line in tst]
+testdataset = SpeechDataset(mode='test', label_to_int=label_to_int, wav_list=wav_list)
+testloader = DataLoader(testdataset, BATCH_SIZE, shuffle=False)
 
-    # 모델을 불러온다
-    speechmodel = torch.nn.DataParallel(model()) if mGPU else model()
-    speechmodel.load_state_dict(torch.load(model_name))
-    speechmodel = speechmodel.cuda()
-    speechmodel.eval()
+# 모델을 불러온다
+speechmodel = torch.nn.DataParallel(model()) if mGPU else model()
+speechmodel.load_state_dict(torch.load(model_name))
+speechmodel = speechmodel.cuda()
+speechmodel.eval()
     
-    test_fnames, test_labels = [], []
-    pred_scores = []
+test_fnames, test_labels = [], []
+pred_scores = []
 
-    # 테스트 데이터에 대한 예측값을 계산한다
-    for batch_idx, batch_data in enumerate(tqdm(testloader)):
-        spec = Variable(batch_data['spec'].cuda())
-        fname = batch_data['id']
-        y_pred = softmax(speechmodel(spec))
-        pred_scores.append(y_pred.data.cpu().numpy())
-        test_fnames += fname
+# 테스트 데이터에 대한 예측값을 계산한다
+for batch_idx, batch_data in enumerate(tqdm(testloader)):
+    spec = Variable(batch_data['spec'].cuda())
+    fname = batch_data['id']
+    y_pred = softmax(speechmodel(spec))
+    pred_scores.append(y_pred.data.cpu().numpy())
+    test_fnames += fname
 
-    # 가장 높은 확률값을 가진 예측값을 label 형태로 저장한다
-    final_pred = np.vstack(pred_scores)
-    final_labels = [int_to_label[x] for x in np.argmax(final_pred, 1)]
-    test_fnames = [x.split("/")[-1] for x in test_fnames]
+# 가장 높은 확률값을 가진 예측값을 label 형태로 저장한다
+final_pred = np.vstack(pred_scores)
+final_labels = [int_to_label[x] for x in np.argmax(final_pred, 1)]
+test_fnames = [x.split("/")[-1] for x in test_fnames]
 
-    # 테스트 파일 명과 예측값을 sub 폴더 아래 저장한다. 캐글에 직접 업로드 할 수 있는 파일 포맷이다.
-    create_directory("sub")
-    pd.DataFrame({'fname': test_fnames, 'label': final_labels}).to_csv("sub/{}.csv".format(model_name.split('/')[-1]), index=False)
+# 테스트 파일 명과 예측값을 sub 폴더 아래 저장한다. 캐글에 직접 업로드 할 수 있는 파일 포맷이다.
+create_directory("sub")
+pd.DataFrame({'fname': test_fnames, 'label': final_labels}).to_csv("sub/{}.csv".format(model_name.split('/')[-1]), index=False)

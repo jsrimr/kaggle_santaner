@@ -36,25 +36,28 @@ if args.weights == 'None':
     args.weights = None
 if args.model in ['vgg16']:
     base_model = keras.applications.vgg16.VGG16(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-    out = Flatten()(base_model.output)
+elif args.model in ['vgg19']:
+    base_model = keras.applications.vgg19.VGG19(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['resnet50']:
     base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-    out = Flatten()(base_model.output)
 elif args.model in ['xception']:
+    img_row_size, img_col_size = 299, 299
     base_model = keras.applications.xception.Xception(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-    out = GlobalAveragePooling2D()(base_model.output)
 elif args.model in ['densenet']:
     base_model = keras.applications.densenet.DenseNet201(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-    out = GlobalAveragePooling2D()(base_model.output)
 elif args.model in ['inceptionresnet']:
+    img_row_size, img_col_size = 299, 299
     base_model = keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-    out = GlobalAveragePooling2D()(base_model.output)
 elif args.model in ['inceptionv3']:
+    img_row_size, img_col_size = 299, 299
     base_model = keras.applications.inception_v3.InceptionV3(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-    out = GlobalAveragePooling2D()(base_model.output)
+elif args.model in ['nasnet']:
+    img_row_size, img_col_size = 331, 331
+    base_model = keras.applications.nasnet.NASNetLarge(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 else:
     print('# {} is not a valid value for "--model"'.format(args.model))
     exit()
+out = Flatten()(base_model.output)
 out = Dense(fc_size, activation='relu')(out)
 out = Dropout(0.5)(out)
 out = Dense(fc_size, activation='relu')(out)

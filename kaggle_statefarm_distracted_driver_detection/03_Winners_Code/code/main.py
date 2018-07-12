@@ -206,13 +206,19 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
             callbacks=callbacks,
             verbose=1)
 
-    # pred on test data
-    preds = model.predict_generator(
-            test_generator,
-            steps=len(test_id),
-            verbose=1)
+    # pred on test data n times with data augmentation
+    for j in range(nfolds):
+        preds = model.predict_generator(
+                test_generator,
+                steps=len(test_id),
+                verbose=1)
 
-    result = pd.DataFrame(preds, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
+        if j == 0:
+            result = pd.DataFrame(preds, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
+        else:
+            result += pd.DataFrame(preds, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
+
+    result /= nfoldst
     result.loc[:, 'img'] = pd.Series(test_id, index=result.index)
     sub_file = '../subm/{}/f{}.csv'.format(suffix, i)
     result.to_csv(sub_file, index=False)

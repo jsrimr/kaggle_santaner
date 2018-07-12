@@ -41,7 +41,7 @@ elif args.model in ['vgg19']:
 elif args.model in ['resnet50']:
     base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['xception']:
-    batch_size = 8
+    fc_size = 1024
     img_row_size, img_col_size = 299, 299
     base_model = keras.applications.xception.Xception(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['densenet']:
@@ -53,7 +53,7 @@ elif args.model in ['inceptionv3']:
     img_row_size, img_col_size = 299, 299
     base_model = keras.applications.inception_v3.InceptionV3(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['nasnet']:
-    batch_size = 8
+    fc_size = 1024
     img_row_size, img_col_size = 331, 331
     base_model = keras.applications.nasnet.NASNetLarge(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 else:

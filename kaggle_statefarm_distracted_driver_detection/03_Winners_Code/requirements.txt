@@ -1,0 +1,8 @@
+numpy
+pillow
+opencv-python
+pandas
+scikit-learn
+keras==2.2.0
+h5py
+tensorflow-gpu==1.8.0

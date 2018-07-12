@@ -41,6 +41,7 @@ elif args.model in ['vgg19']:
 elif args.model in ['resnet50']:
     base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['xception']:
+    batch_size = 8
     img_row_size, img_col_size = 299, 299
     base_model = keras.applications.xception.Xception(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['densenet']:
@@ -52,6 +53,7 @@ elif args.model in ['inceptionv3']:
     img_row_size, img_col_size = 299, 299
     base_model = keras.applications.inception_v3.InceptionV3(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['nasnet']:
+    batch_size = 8
     img_row_size, img_col_size = 331, 331
     base_model = keras.applications.nasnet.NASNetLarge(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 else:
@@ -66,7 +68,8 @@ output = Dense(n_class, activation='softmax')(out)
 model = Model(inputs=base_model.input, outputs=output)
 
 sgd = SGD(lr=1e-4, decay=1e-6, momentum=0.9, nesterov=True)
-model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
+adam = Adam(lr=1e-5)
+model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
 
 from glob import glob
 import numpy as np
@@ -199,7 +202,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     model.fit_generator(
             train_generator,
             steps_per_epoch=train_samples/batch_size,
-            epochs=2,
+            epochs=500,
             validation_data=valid_generator,
             validation_steps=valid_samples/batch_size,
             shuffle=True,

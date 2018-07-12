@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import os
 from datetime import datetime
+from scipy.ndimage import rotate
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=False, default='vgg16', help='Model Architecture')
@@ -27,27 +28,29 @@ os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)
 temp_valid_fold = '../input/temp_valid_fold_{}'.format(suffix)
+img_row_size, img_col_size = 224, 224
+
 
 print('# Define Model')
 if args.weights == 'None':
     args.weights = None
 if args.model in ['vgg16']:
-    base_model = keras.applications.vgg16.VGG16(include_top=False, weights=args.weights, input_shape=(224,224,3))
+    base_model = keras.applications.vgg16.VGG16(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
     out = Flatten()(base_model.output)
 elif args.model in ['resnet50']:
-    base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(224,224,3))
+    base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
     out = Flatten()(base_model.output)
 elif args.model in ['xception']:
-    base_model = keras.applications.xception.Xception(include_top=False, weights=args.weights, input_shape=(224,224,3))
+    base_model = keras.applications.xception.Xception(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
     out = GlobalAveragePooling2D()(base_model.output)
 elif args.model in ['densenet']:
-    base_model = keras.applications.densenet.DenseNet201(include_top=False, weights=args.weights, input_shape=(224,224,3))
+    base_model = keras.applications.densenet.DenseNet201(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
     out = GlobalAveragePooling2D()(base_model.output)
 elif args.model in ['inceptionresnet']:
-    base_model = keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=False, weights=args.weights, input_shape=(224,224,3))
+    base_model = keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
     out = GlobalAveragePooling2D()(base_model.output)
 elif args.model in ['inceptionv3']:
-    base_model = keras.applications.inception_v3.InceptionV3(include_top=False, weights=args.weights, input_shape=(224,224,3))
+    base_model = keras.applications.inception_v3.InceptionV3(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
     out = GlobalAveragePooling2D()(base_model.output)
 else:
     print('# {} is not a valid value for "--model"'.format(args.model))
@@ -124,12 +127,45 @@ def generate_driver_based_split(img_to_driver, train_drivers):
     print('# {} train samples | {} valid samples'.format(train_samples, valid_samples))
     return train_samples, valid_samples
 
+def crop_center(img,cropx,cropy):
+    y,x = img.shape
+    startx = x//2-(cropx//2)
+    starty = y//2-(cropy//2)    
+    return img[starty:starty+cropy,startx:startx+cropx]
+
+def preprocess(image):
+    # rescale
+    image /= 255.
+
+    # rotate
+    rotate_angle = np.random.randint(60) - 30
+    image = rotate(image, rotate_angle)
+
+    # translate
+    rows, cols, _ = image.shape
+    width_translate = np.random.randint(100) - 50
+    height_translate = np.random.randint(100) - 50
+    M = np.float32([[1,0,width_translate],[0,1,height_translate]])
+    image = cv2.warpAffine(image,M,(cols,rows))    
+
+    # zoom
+    width_zoom = int(img_row_size * (0.8 + 0.2 * (1 - np.random.random())))
+    height_zoom = int(img_col_size * (0.8 + 0.2 * (1 - np.random.random())))
+    final_image = np.zeros((height_zoom, width_zoom, 3))
+    final_image[:,:,0] = crop_center(image[:,:,0], width_zoom, height_zoom)
+    final_image[:,:,1] = crop_center(image[:,:,1], width_zoom, height_zoom)
+    final_image[:,:,2] = crop_center(image[:,:,2], width_zoom, height_zoom)
+
+    # resize
+    image = cv2.resize(final_image, (img_row_size, img_col_size))
+
+    return image
+
 print('# Train Model')
-test_datagen = ImageDataGenerator(
-        rescale=1./255)
-test_generator = test_datagen.flow_from_directory(
+datagen = ImageDataGenerator(preprocessing_function=preprocess)
+test_generator = datagen.flow_from_directory(
         '../input/test',
-        target_size=(224, 224),
+        target_size=(img_row_size, img_col_size),
         batch_size=1,
         class_mode=None,
         shuffle=False)
@@ -141,22 +177,15 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
 
     train_samples, valid_samples = generate_driver_based_split(img_to_driver, train_drivers)
 
-    train_datagen = ImageDataGenerator(
-            rescale=1./255,
-            shear_range=0.2,
-            zoom_range=0.2,
-            rotation_range=30,
-            width_shift_range=0.2,
-            height_shift_range=0.2)
-    train_generator = train_datagen.flow_from_directory(
+    train_generator = datagen.flow_from_directory(
             temp_train_fold,
-            target_size=(224, 224),
+            target_size=(img_row_size, img_col_size),
             batch_size=batch_size,
             class_mode='categorical',
             seed=seed)
-    valid_generator = train_datagen.flow_from_directory(
+    valid_generator = datagen.flow_from_directory(
             temp_valid_fold,
-            target_size=(224, 224),
+            target_size=(img_row_size, img_col_size),
             batch_size=batch_size,
             class_mode='categorical',
             seed=seed)
@@ -167,7 +196,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     model.fit_generator(
             train_generator,
             steps_per_epoch=train_samples/batch_size,
-            epochs=500,
+            epochs=2,
             validation_data=valid_generator,
             validation_steps=valid_samples/batch_size,
             shuffle=True,

@@ -25,7 +25,7 @@ seed = 18
 nfolds = 10
 test_nfolds = 3
 batch_size = 16
-suffix = 'm{}.w{}.s{}.nf{}.d{}'.format(args.model, args.weights, seed, nfolds, datetime.now().strftime("%Y-%m-%d-%H-%M"))
+suffix = 'm{}.w{}.s{}.nf{}.t{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)
@@ -141,7 +141,7 @@ def generate_driver_based_split(img_to_driver, train_drivers):
         # semi supervised train does naive random split
         cmd = 'cp {} {}/{}/'
         for label in labels:
-            files = glob('{}/{}/*jpg'format(train_path, label))
+            files = glob('{}/{}/*jpg'.format(train_path, label))
             for fl in files:
                 if np.random.randint(nfolds) == 1:
                     cmd = cmd.format(fl, temp_train_fold, label)

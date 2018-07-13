@@ -139,16 +139,18 @@ def generate_driver_based_split(img_to_driver, train_drivers):
             subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
     else:
         # semi supervised train does naive random split
-        cmd = 'cp {} {}/{}/'
         for label in labels:
             files = glob('{}/{}/*jpg'.format(train_path, label))
             for fl in files:
+        	cmd = 'cp {} {}/{}/'
                 if np.random.randint(nfolds) == 1:
                     cmd = cmd.format(fl, temp_train_fold, label)
                     train_samples += 1
                 else:
                     cmd = cmd.format(fl, temp_valid_fold, label)
                     valid_samples += 1
+                # copy image
+                subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
 
     # show stat
     print('# {} train samples | {} valid samples'.format(train_samples, valid_samples))

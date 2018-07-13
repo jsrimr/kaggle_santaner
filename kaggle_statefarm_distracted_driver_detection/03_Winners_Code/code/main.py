@@ -16,6 +16,7 @@ from scipy.ndimage import rotate
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=False, default='vgg16', help='Model Architecture')
 parser.add_argument('--weights', required=False, default='imagenet')
+parser.add_argument('--semi-train', required=False, default=None)
 args = parser.parse_args()
 
 fc_size = 4096
@@ -30,6 +31,11 @@ os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)
 temp_valid_fold = '../input/temp_valid_fold_{}'.format(suffix)
 img_row_size, img_col_size = 224, 224
+train_path = '../input/train'
+if args.semi_train is not None:
+    train_path = '../input/semi_train'
+test_path = '../input/test'
+labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
 
 
 print('# Define Model')
@@ -116,20 +122,33 @@ def generate_driver_based_split(img_to_driver, train_drivers):
 
     train_samples = 0
     valid_samples = 0
-    # iterate over 'img_to_driver' dict for each image and its path
-    for img_path in img_to_driver.keys():
-        cmd = 'cp ../input/train/{}/{} {}/{}/{}'
-        label = img_to_driver[img_path]['label']
-        if not os.path.exists('../input/train/{}/{}'.format(label, img_path)):
-            continue
-        if img_to_driver[img_path]['driver'] in train_drivers:
-            cmd = cmd.format(label, img_path, temp_train_fold, label, img_path)
-            train_samples += 1
-        else:
-            cmd = cmd.format(label, img_path, temp_valid_fold, label, img_path)
-            valid_samples += 1
-        # copy image
-        subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
+    if args.semi_train is None:
+        # iterate over 'img_to_driver' dict for each image and its path
+        for img_path in img_to_driver.keys():
+            cmd = 'cp {}/{}/{} {}/{}/{}'
+            label = img_to_driver[img_path]['label']
+            if not os.path.exists('{}/{}/{}'.format(train_path, label, img_path)):
+                continue
+            if img_to_driver[img_path]['driver'] in train_drivers:
+                cmd = cmd.format(train_path, label, img_path, temp_train_fold, label, img_path)
+                train_samples += 1
+            else:
+                cmd = cmd.format(train_path, label, img_path, temp_valid_fold, label, img_path)
+                valid_samples += 1
+            # copy image
+            subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
+    else:
+        # semi supervised train does naive random split
+        cmd = 'cp {} {}/{}/'
+        for label in labels:
+            files = glob('{}/{}/*jpg'format(train_path, label))
+            for fl in files:
+                if np.random.randint(nfolds) == 1:
+                    cmd = cmd.format(fl, temp_train_fold, label)
+                    train_samples += 1
+                else:
+                    cmd = cmd.format(fl, temp_valid_fold, label)
+                    valid_samples += 1
 
     # show stat
     print('# {} train samples | {} valid samples'.format(train_samples, valid_samples))
@@ -172,12 +191,12 @@ def preprocess(image):
 print('# Train Model')
 datagen = ImageDataGenerator(preprocessing_function=preprocess)
 test_generator = datagen.flow_from_directory(
-        '../input/test',
+        test_path,
         target_size=(img_row_size, img_col_size),
         batch_size=1,
         class_mode=None,
         shuffle=False)
-test_id = [os.path.basename(fl) for fl in glob('../input/test/imgs/*.jpg')]
+test_id = [os.path.basename(fl) for fl in glob('{}/imgs/*.jpg'.format(test_path))]
 
 kf = KFold(len(uniq_drivers), n_folds=nfolds, shuffle=True, random_state=2018)
 for i, (train_drivers, valid_drivers) in enumerate(kf):
@@ -219,9 +238,9 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
                 verbose=1)
 
         if j == 0:
-            result = pd.DataFrame(preds, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
+            result = pd.DataFrame(preds, columns=labels)
         else:
-            result += pd.DataFrame(preds, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
+            result += pd.DataFrame(preds, columns=labels)
 
     result /= test_nfolds
     result.loc[:, 'img'] = pd.Series(test_id, index=result.index)
@@ -238,7 +257,7 @@ print('# Ensemble')
 ensemble = 0
 for fold in range(nfolds):
     ensemble += pd.read_csv('../subm/{}/f{}.csv'.format(suffix, fold), index_col=-1).values * 1. / nfolds
-ensemble = pd.DataFrame(ensemble, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
+ensemble = pd.DataFrame(ensemble, columns=labels)
 ensemble.loc[:, 'img'] = pd.Series(test_id, index=ensemble.index)
 sub_file = '../subm/{}/ens.csv'.format(suffix)
 ensemble.to_csv(sub_file, index=False)

@@ -22,6 +22,7 @@ fc_size = 4096
 n_class = 10
 seed = 18
 nfolds = 10
+test_nfolds = 3
 batch_size = 16
 suffix = 'm{}.w{}.s{}.nf{}.d{}'.format(args.model, args.weights, seed, nfolds, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
@@ -53,7 +54,8 @@ elif args.model in ['inceptionv3']:
     img_row_size, img_col_size = 299, 299
     base_model = keras.applications.inception_v3.InceptionV3(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['nasnet']:
-    fc_size = 1024
+    fc_size = 512
+    batch_size = 8
     img_row_size, img_col_size = 331, 331
     base_model = keras.applications.nasnet.NASNetLarge(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 else:
@@ -210,7 +212,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
             verbose=1)
 
     # pred on test data n times with data augmentation
-    for j in range(nfolds):
+    for j in range(test_nfolds):
         preds = model.predict_generator(
                 test_generator,
                 steps=len(test_id),
@@ -221,7 +223,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
         else:
             result += pd.DataFrame(preds, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
 
-    result /= nfolds
+    result /= test_nfolds
     result.loc[:, 'img'] = pd.Series(test_id, index=result.index)
     sub_file = '../subm/{}/f{}.csv'.format(suffix, i)
     result.to_csv(sub_file, index=False)

@@ -221,7 +221,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
         else:
             result += pd.DataFrame(preds, columns=['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'])
 
-    result /= nfoldst
+    result /= nfolds
     result.loc[:, 'img'] = pd.Series(test_id, index=result.index)
     sub_file = '../subm/{}/f{}.csv'.format(suffix, i)
     result.to_csv(sub_file, index=False)

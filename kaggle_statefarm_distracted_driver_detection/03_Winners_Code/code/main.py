@@ -12,6 +12,7 @@ import shutil
 import os
 from datetime import datetime
 from scipy.ndimage import rotate
+import scipy.misc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=False, default='vgg16', help='Model Architecture')
@@ -25,7 +26,8 @@ seed = 18
 nfolds = 10
 test_nfolds = 3
 batch_size = 16
-suffix = 'm{}.w{}.s{}.nf{}.t{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, datetime.now().strftime("%Y-%m-%d-%H-%M"))
+augment_half = 50000
+suffix = 'm{}.w{}.s{}.nf{}.t{}.a{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, augment_half, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)
@@ -76,8 +78,7 @@ output = Dense(n_class, activation='softmax')(out)
 model = Model(inputs=base_model.input, outputs=output)
 
 sgd = SGD(lr=1e-4, decay=1e-6, momentum=0.9, nesterov=True)
-adam = Adam(lr=1e-5)
-model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
 
 from glob import glob
 import numpy as np
@@ -151,6 +152,25 @@ def generate_driver_based_split(img_to_driver, train_drivers):
                     valid_samples += 1
                 # copy image
                 subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
+
+    # augment data by using two images from the same class half and half
+    for label in labels:
+        files = glob('{}/{}/*.jpg'.format(temp_train_fold, label))
+        for _ in range(augment_half):
+            # read two random images from same label
+            idx_left, idx_right = np.random.randint(len(files)), np.random.randint(len(files))
+            file_left = files[idx_left]
+            file_right = files[idx_right]
+            img_left = read_image(file_left)
+            img_right = read_image(file_right)
+
+            # generate new image that is half each of image
+            img_augmented = img_left
+            row, col, _ = img_augmented.shape
+            img_augmented[:, col/2:, :] = img_right[:, col/2:, :]
+            basename_left = os.path.basename(file_left).split('.jpg')[0]
+            basename_right = os.path.basename(file_right).split('.jpg')[0]
+            scipy.misc.imsave('{}/{}/{}_{}.jpg'.format(temp_train_fold, label, basename_left, basename_right), img_augmented)
 
     # show stat
     print('# {} train samples | {} valid samples'.format(train_samples, valid_samples))

@@ -26,7 +26,7 @@ seed = 18
 nfolds = 10
 test_nfolds = 3
 batch_size = 16
-augment_half = 50000
+augment_half = 10000
 suffix = 'm{}.w{}.s{}.nf{}.t{}.a{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, augment_half, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
@@ -89,6 +89,11 @@ from keras.preprocessing import image
 
 # get drivers
 import pandas as pd
+
+def read_image(path):
+    image = cv2.imread(path, cv2.IMREAD_COLOR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
 
 print('# Data Load')
 drivers = pd.read_csv('../input/driver_imgs_list.csv')
@@ -171,6 +176,8 @@ def generate_driver_based_split(img_to_driver, train_drivers):
             basename_left = os.path.basename(file_left).split('.jpg')[0]
             basename_right = os.path.basename(file_right).split('.jpg')[0]
             scipy.misc.imsave('{}/{}/{}_{}.jpg'.format(temp_train_fold, label, basename_left, basename_right), img_augmented)
+
+            train_samples += 1
 
     # show stat
     print('# {} train samples | {} valid samples'.format(train_samples, valid_samples))

@@ -2,7 +2,7 @@
 
 import keras
 from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers import Dense, GlobalAveragePooling2D
+from keras.layers import Dense, GlobalAveragePooling2D, BatchNormalization, Add
 from keras.layers import add
 from keras.models import Model
 from keras.optimizers import SGD, Adam
@@ -20,14 +20,13 @@ parser.add_argument('--weights', required=False, default='imagenet')
 parser.add_argument('--semi-train', required=False, default=None)
 args = parser.parse_args()
 
-fc_size = 4096
+fc_size = 1024
 n_class = 10
-seed = 18
+seed = 20
 nfolds = 10
 test_nfolds = 3
 batch_size = 16
-augment_half = 10000
-suffix = 'm{}.w{}.s{}.nf{}.t{}.a{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, augment_half, datetime.now().strftime("%Y-%m-%d-%H-%M"))
+suffix = 'm{}.w{}.s{}.nf{}.t{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)
@@ -35,7 +34,7 @@ temp_valid_fold = '../input/temp_valid_fold_{}'.format(suffix)
 img_row_size, img_col_size = 224, 224
 train_path = '../input/train'
 if args.semi_train is not None:
-    train_path = '../input/semi_train'
+    train_path = '../input/semi_train_vgg16.semi-train.v1.f7-ens'
 test_path = '../input/test'
 labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
 
@@ -70,11 +69,19 @@ else:
     print('# {} is not a valid value for "--model"'.format(args.model))
     exit()
 out = Flatten()(base_model.output)
-out = Dense(fc_size, activation='relu')(out)
-out = Dropout(0.5)(out)
-out = Dense(fc_size, activation='relu')(out)
-out = Dropout(0.5)(out)
-output = Dense(n_class, activation='softmax')(out)
+fc1 = Dense(fc_size)(out)
+fc1 = BatchNormalization()(fc1)
+fc1 = Activation('relu')(fc1)
+fc1 = Dropout(0.5)(fc1)
+fc1 = Add()([fc1, out])
+
+fc2 = Dense(fc_size)(fc1)
+fc2 = BatchNormalization()(fc2)
+fc2 = Activation('relu')(fc2)
+fc2 = Dropout(0.5)(fc2)
+fc2 = Add()([fc2, fc1])
+
+output = Dense(n_class, activation='softmax')(fc2)
 model = Model(inputs=base_model.input, outputs=output)
 
 sgd = SGD(lr=1e-4, decay=1e-6, momentum=0.9, nesterov=True)
@@ -158,27 +165,6 @@ def generate_driver_based_split(img_to_driver, train_drivers):
                 # copy image
                 subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
 
-    # augment data by using two images from the same class half and half
-    for label in labels:
-        files = glob('{}/{}/*.jpg'.format(temp_train_fold, label))
-        for _ in range(augment_half):
-            # read two random images from same label
-            idx_left, idx_right = np.random.randint(len(files)), np.random.randint(len(files))
-            file_left = files[idx_left]
-            file_right = files[idx_right]
-            img_left = read_image(file_left)
-            img_right = read_image(file_right)
-
-            # generate new image that is half each of image
-            img_augmented = img_left
-            row, col, _ = img_augmented.shape
-            img_augmented[:, col/2:, :] = img_right[:, col/2:, :]
-            basename_left = os.path.basename(file_left).split('.jpg')[0]
-            basename_right = os.path.basename(file_right).split('.jpg')[0]
-            scipy.misc.imsave('{}/{}/{}_{}.jpg'.format(temp_train_fold, label, basename_left, basename_right), img_augmented)
-
-            train_samples += 1
-
     # show stat
     print('# {} train samples | {} valid samples'.format(train_samples, valid_samples))
     return train_samples, valid_samples
@@ -227,7 +213,7 @@ test_generator = datagen.flow_from_directory(
         shuffle=False)
 test_id = [os.path.basename(fl) for fl in glob('{}/imgs/*.jpg'.format(test_path))]
 
-kf = KFold(len(uniq_drivers), n_folds=nfolds, shuffle=True, random_state=2018)
+kf = KFold(len(uniq_drivers), n_folds=nfolds, shuffle=True, random_state=20)
 for i, (train_drivers, valid_drivers) in enumerate(kf):
     train_drivers = [uniq_drivers[j] for j in train_drivers]
 
@@ -247,7 +233,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
             seed=seed)
 
     weight_path = '../cache/{}/mini_weight.fold_{}.h5'.format(suffix, i)
-    callbacks = [EarlyStopping(monitor='val_loss', patience=5, verbose=0),
+    callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=0),
             ModelCheckpoint(weight_path, monitor='val_loss', save_best_only=True, verbose=0)]
     model.fit_generator(
             train_generator,

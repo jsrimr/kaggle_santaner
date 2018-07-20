@@ -22,8 +22,8 @@ parser.add_argument('--semi-train', required=False, default=None)
 parser.add_argument('--row-size', required=False, type=int, default=224)
 parser.add_argument('--col-size', required=False, type=int, default=224)
 parser.add_argument('--batch-size', required=False, type=int, default=8)
-parser.add_argument('--random-split', required=False, type=bool, default=False)
-parser.add_argument('--data-augment', required=False, type=bool, default=True)
+parser.add_argument('--random-split', required=False, type=int, default=0)
+parser.add_argument('--data-augment', required=False, type=int, default=1)
 args = parser.parse_args()
 
 fc_size = 4096

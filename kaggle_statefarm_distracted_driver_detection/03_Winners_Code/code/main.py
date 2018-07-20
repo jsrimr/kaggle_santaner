@@ -192,7 +192,7 @@ else:
 test_generator = datagen.flow_from_directory(
         test_path,
         target_size=(img_row_size, img_col_size),
-        args.batch_size=1,
+        batch_size=1,
         class_mode=None,
         shuffle=False)
 test_id = [os.path.basename(fl) for fl in glob('{}/imgs/*.jpg'.format(test_path))]
@@ -206,13 +206,13 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     train_generator = datagen.flow_from_directory(
             temp_train_fold,
             target_size=(img_row_size, img_col_size),
-            args.batch_size=args.batch_size,
+            batch_size=args.batch_size,
             class_mode='categorical',
             seed=seed)
     valid_generator = datagen.flow_from_directory(
             temp_valid_fold,
             target_size=(img_row_size, img_col_size),
-            args.batch_size=args.batch_size,
+            batch_size=args.batch_size,
             class_mode='categorical',
             seed=seed)
 

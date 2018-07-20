@@ -173,13 +173,13 @@ def preprocess(image):
     image /= 255.
 
     # rotate
-    rotate_angle = np.random.randint(60) - 120
+    rotate_angle = np.random.randint(60) - 30
     image = rotate(image, rotate_angle)
 
     # translate
     rows, cols, _ = image.shape
-    width_translate = np.random.randint(200) - 100
-    height_translate = np.random.randint(200) - 100
+    width_translate = np.random.randint(100) - 50
+    height_translate = np.random.randint(100) - 50
     M = np.float32([[1,0,width_translate],[0,1,height_translate]])
     image = cv2.warpAffine(image,M,(cols,rows))    
 

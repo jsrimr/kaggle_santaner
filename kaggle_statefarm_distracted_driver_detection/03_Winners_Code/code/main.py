@@ -173,19 +173,19 @@ def preprocess(image):
     image /= 255.
 
     # rotate
-    rotate_angle = np.random.randint(60) - 30
+    rotate_angle = np.random.randint(60) - 120
     image = rotate(image, rotate_angle)
 
     # translate
     rows, cols, _ = image.shape
-    width_translate = np.random.randint(100) - 50
-    height_translate = np.random.randint(100) - 50
+    width_translate = np.random.randint(200) - 100
+    height_translate = np.random.randint(200) - 100
     M = np.float32([[1,0,width_translate],[0,1,height_translate]])
     image = cv2.warpAffine(image,M,(cols,rows))    
 
     # zoom
-    width_zoom = int(img_row_size * (0.8 + 0.2 * (1 - np.random.random())))
-    height_zoom = int(img_col_size * (0.8 + 0.2 * (1 - np.random.random())))
+    width_zoom = int(img_row_size * (0.7 + 0.3 * (1 - np.random.random())))
+    height_zoom = int(img_col_size * (0.7 + 0.3 * (1 - np.random.random())))
     final_image = np.zeros((height_zoom, width_zoom, 3))
     final_image[:,:,0] = crop_center(image[:,:,0], width_zoom, height_zoom)
     final_image[:,:,1] = crop_center(image[:,:,1], width_zoom, height_zoom)

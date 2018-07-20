@@ -20,11 +20,11 @@ parser.add_argument('--weights', required=False, default='imagenet')
 parser.add_argument('--semi-train', required=False, default=None)
 args = parser.parse_args()
 
-fc_size = 1024
+fc_size = 4096
 n_class = 10
 seed = 20
-nfolds = 10
-test_nfolds = 3
+nfolds = 4
+test_nfolds = 1
 batch_size = 16
 suffix = 'm{}.w{}.s{}.nf{}.t{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
@@ -69,19 +69,12 @@ else:
     print('# {} is not a valid value for "--model"'.format(args.model))
     exit()
 out = Flatten()(base_model.output)
-fc1 = Dense(fc_size)(out)
-fc1 = BatchNormalization()(fc1)
-fc1 = Activation('relu')(fc1)
-fc1 = Dropout(0.5)(fc1)
-fc1 = Add()([fc1, out])
+out = Dense(fc_size, activation='relu')(out)
+out = Dropout(0.5)(out)
+out = Dense(fc_size, activation='relu')(out)
+out = Dropout(0.5)(out)
 
-fc2 = Dense(fc_size)(fc1)
-fc2 = BatchNormalization()(fc2)
-fc2 = Activation('relu')(fc2)
-fc2 = Dropout(0.5)(fc2)
-fc2 = Add()([fc2, fc1])
-
-output = Dense(n_class, activation='softmax')(fc2)
+output = Dense(n_class, activation='softmax')(out)
 model = Model(inputs=base_model.input, outputs=output)
 
 sgd = SGD(lr=1e-4, decay=1e-6, momentum=0.9, nesterov=True)
@@ -200,7 +193,6 @@ def preprocess(image):
 
     # resize
     image = cv2.resize(final_image, (img_row_size, img_col_size))
-
     return image
 
 print('# Train Model')
@@ -233,7 +225,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
             seed=seed)
 
     weight_path = '../cache/{}/mini_weight.fold_{}.h5'.format(suffix, i)
-    callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=0),
+    callbacks = [EarlyStopping(monitor='val_loss', patience=3, verbose=0),
             ModelCheckpoint(weight_path, monitor='val_loss', save_best_only=True, verbose=0)]
     model.fit_generator(
             train_generator,
@@ -261,6 +253,10 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     result.loc[:, 'img'] = pd.Series(test_id, index=result.index)
     sub_file = '../subm/{}/f{}.csv'.format(suffix, i)
     result.to_csv(sub_file, index=False)
+
+    # submit to kaggle
+    submit_cmd = 'kaggle competitions submit -c state-farm-distracted-driver-detection -f {} -m {}.fold{}'.format(sub_file, suffix, i)
+    subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)
 
     # remove temp folders
     if os.path.exists(temp_train_fold):

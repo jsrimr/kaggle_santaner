@@ -23,15 +23,18 @@ args = parser.parse_args()
 fc_size = 4096
 n_class = 10
 seed = 20
-nfolds = 4
-test_nfolds = 1
-batch_size = 16
-suffix = 'm{}.w{}.s{}.nf{}.t{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, datetime.now().strftime("%Y-%m-%d-%H-%M"))
+nfolds = 5
+test_nfolds = 3
+batch_size = 8
+img_row_size, img_col_size = 480, 640
+preprocess = False
+random_split = True
+
+suffix = 'm{}.w{}.s{}.nf{}.t{}.b{}.row{}col{}.p{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, batch_size, img_row_size, img_col_size, preprocess, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)
 temp_valid_fold = '../input/temp_valid_fold_{}'.format(suffix)
-img_row_size, img_col_size = 224, 224
 train_path = '../input/train'
 if args.semi_train is not None:
     train_path = '../input/semi_train_vgg16.semi-train.v1.f7-ens'
@@ -48,23 +51,6 @@ elif args.model in ['vgg19']:
     base_model = keras.applications.vgg19.VGG19(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 elif args.model in ['resnet50']:
     base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-elif args.model in ['xception']:
-    fc_size = 1024
-    img_row_size, img_col_size = 299, 299
-    base_model = keras.applications.xception.Xception(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-elif args.model in ['densenet']:
-    base_model = keras.applications.densenet.DenseNet201(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-elif args.model in ['inceptionresnet']:
-    img_row_size, img_col_size = 299, 299
-    base_model = keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-elif args.model in ['inceptionv3']:
-    img_row_size, img_col_size = 299, 299
-    base_model = keras.applications.inception_v3.InceptionV3(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-elif args.model in ['nasnet']:
-    fc_size = 512
-    batch_size = 8
-    img_row_size, img_col_size = 331, 331
-    base_model = keras.applications.nasnet.NASNetLarge(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
 else:
     print('# {} is not a valid value for "--model"'.format(args.model))
     exit()
@@ -77,7 +63,7 @@ out = Dropout(0.5)(out)
 output = Dense(n_class, activation='softmax')(out)
 model = Model(inputs=base_model.input, outputs=output)
 
-sgd = SGD(lr=1e-4, decay=1e-6, momentum=0.9, nesterov=True)
+sgd = SGD(lr=1e-2, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
 
 from glob import glob
@@ -128,7 +114,7 @@ def generate_driver_based_split(img_to_driver, train_drivers):
 
     train_samples = 0
     valid_samples = 0
-    if args.semi_train is None:
+    if not random_split or args.semi_train is None:
         # iterate over 'img_to_driver' dict for each image and its path
         for img_path in img_to_driver.keys():
             cmd = 'cp {}/{}/{} {}/{}/{}'
@@ -196,7 +182,11 @@ def preprocess(image):
     return image
 
 print('# Train Model')
-datagen = ImageDataGenerator(preprocessing_function=preprocess)
+if preprocess:
+    datagen = ImageDataGenerator(preprocessing_function=preprocess)
+else:
+    datagen = ImageDataGenerator()
+
 test_generator = datagen.flow_from_directory(
         test_path,
         target_size=(img_row_size, img_col_size),

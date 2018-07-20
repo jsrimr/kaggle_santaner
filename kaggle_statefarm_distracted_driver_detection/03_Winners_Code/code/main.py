@@ -33,7 +33,7 @@ nfolds = 5
 test_nfolds = 3
 img_row_size, img_col_size = args.row_size, args.col_size
 
-suffix = 'm{}.w{}.s{}.nf{}.t{}.b{}.row{}col{}.p{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, args.batch_size, img_row_size, img_col_size, args.data_augment, datetime.now().strftime("%Y-%m-%d-%H-%M"))
+suffix = 'm{}.w{}.lr{}.s{}.nf{}.semi{}.b{}.row{}col{}.rsplit{}.augment{}.d{}'.format(args.model, args.weights, args.learning_rate, seed, nfolds, args.semi_train, args.batch_size, img_row_size, img_col_size, args.random_split, args.data_augment, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)

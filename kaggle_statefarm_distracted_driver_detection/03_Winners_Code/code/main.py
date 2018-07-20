@@ -17,12 +17,13 @@ import scipy.misc
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=False, default='vgg16', help='Model Architecture')
 parser.add_argument('--weights', required=False, default='imagenet')
+parser.add_argument('--learning-rate', required=False, type=float, default=1e-4)
 parser.add_argument('--semi-train', required=False, default=None)
 parser.add_argument('--row-size', required=False, type=int, default=224)
 parser.add_argument('--col-size', required=False, type=int, default=224)
 parser.add_argument('--batch-size', required=False, type=int, default=8)
 parser.add_argument('--random-split', required=False, type=bool, default=False)
-parser.add_argument('--data-augment', required=False, type=bool, default=False)
+parser.add_argument('--data-augment', required=False, type=bool, default=True)
 args = parser.parse_args()
 
 fc_size = 4096
@@ -65,7 +66,7 @@ out = Dropout(0.5)(out)
 output = Dense(n_class, activation='softmax')(out)
 model = Model(inputs=base_model.input, outputs=output)
 
-sgd = SGD(lr=1e-2, decay=1e-6, momentum=0.9, nesterov=True)
+sgd = SGD(lr=args.learning_rate, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
 
 from glob import glob

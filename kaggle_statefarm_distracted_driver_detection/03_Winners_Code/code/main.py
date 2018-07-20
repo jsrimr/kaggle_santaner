@@ -26,7 +26,7 @@ seed = 20
 nfolds = 5
 test_nfolds = 3
 batch_size = 8
-img_row_size, img_col_size = 480, 640
+img_row_size, img_col_size = 224, 224
 preprocess = False
 random_split = True
 

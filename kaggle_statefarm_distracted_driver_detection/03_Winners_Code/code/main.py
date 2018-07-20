@@ -18,6 +18,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=False, default='vgg16', help='Model Architecture')
 parser.add_argument('--weights', required=False, default='imagenet')
 parser.add_argument('--semi-train', required=False, default=None)
+parser.add_argument('--row-size', required=False, default=224)
+parser.add_argument('--col-size', required=False, default=224)
+parser.add_argument('--batch-size', required=False, default=8)
+parser.add_argument('--random-split', required=False, type=bool, default=False)
+parser.add_argument('--data-augment', required=False, type=bool, default=False)
 args = parser.parse_args()
 
 fc_size = 4096
@@ -25,12 +30,9 @@ n_class = 10
 seed = 20
 nfolds = 5
 test_nfolds = 3
-batch_size = 8
-img_row_size, img_col_size = 224, 224
-preprocess = False
-random_split = True
+img_row_size, img_col_size = args.row_size, args.col_size
 
-suffix = 'm{}.w{}.s{}.nf{}.t{}.b{}.row{}col{}.p{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, batch_size, img_row_size, img_col_size, preprocess, datetime.now().strftime("%Y-%m-%d-%H-%M"))
+suffix = 'm{}.w{}.s{}.nf{}.t{}.b{}.row{}col{}.p{}.d{}'.format(args.model, args.weights, seed, nfolds, args.semi_train, args.batch_size, img_row_size, img_col_size, args.data_augment, datetime.now().strftime("%Y-%m-%d-%H-%M"))
 os.mkdir('../cache/{}'.format(suffix))
 os.mkdir('../subm/{}'.format(suffix))
 temp_train_fold = '../input/temp_train_fold_{}'.format(suffix)
@@ -114,7 +116,7 @@ def generate_driver_based_split(img_to_driver, train_drivers):
 
     train_samples = 0
     valid_samples = 0
-    if not random_split or args.semi_train is None:
+    if not args.random_split or args.semi_train is None:
         # iterate over 'img_to_driver' dict for each image and its path
         for img_path in img_to_driver.keys():
             cmd = 'cp {}/{}/{} {}/{}/{}'
@@ -182,7 +184,7 @@ def preprocess(image):
     return image
 
 print('# Train Model')
-if preprocess:
+if args.data_augment:
     datagen = ImageDataGenerator(preprocessing_function=preprocess)
 else:
     datagen = ImageDataGenerator()
@@ -190,7 +192,7 @@ else:
 test_generator = datagen.flow_from_directory(
         test_path,
         target_size=(img_row_size, img_col_size),
-        batch_size=1,
+        args.batch_size=1,
         class_mode=None,
         shuffle=False)
 test_id = [os.path.basename(fl) for fl in glob('{}/imgs/*.jpg'.format(test_path))]
@@ -204,13 +206,13 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     train_generator = datagen.flow_from_directory(
             temp_train_fold,
             target_size=(img_row_size, img_col_size),
-            batch_size=batch_size,
+            args.batch_size=args.batch_size,
             class_mode='categorical',
             seed=seed)
     valid_generator = datagen.flow_from_directory(
             temp_valid_fold,
             target_size=(img_row_size, img_col_size),
-            batch_size=batch_size,
+            args.batch_size=args.batch_size,
             class_mode='categorical',
             seed=seed)
 
@@ -219,10 +221,10 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
             ModelCheckpoint(weight_path, monitor='val_loss', save_best_only=True, verbose=0)]
     model.fit_generator(
             train_generator,
-            steps_per_epoch=train_samples/batch_size,
+            steps_per_epoch=train_samples/args.batch_size,
             epochs=500,
             validation_data=valid_generator,
-            validation_steps=valid_samples/batch_size,
+            validation_steps=valid_samples/args.batch_size,
             shuffle=True,
             callbacks=callbacks,
             verbose=1)

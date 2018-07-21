@@ -57,6 +57,12 @@ def get_model():
     else:
         print('# {} is not a valid value for "--model"'.format(args.model))
         exit()
+
+    # freeze layers if fine-tuning
+    if args.weights is None:
+        for layer in base_model.layers:
+            layer.trainable = False
+
     out = Flatten()(base_model.output)
     out = Dense(fc_size, activation='relu')(out)
     out = Dropout(0.5)(out)

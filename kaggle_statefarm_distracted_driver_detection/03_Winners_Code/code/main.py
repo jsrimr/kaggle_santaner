@@ -26,9 +26,9 @@ parser.add_argument('--random-split', required=False, type=int, default=0)
 parser.add_argument('--data-augment', required=False, type=int, default=1)
 args = parser.parse_args()
 
-fc_size = 4096
+fc_size = 1024
 n_class = 10
-seed = 20
+seed = 10
 nfolds = 5
 test_nfolds = 3
 img_row_size, img_col_size = args.row_size, args.col_size

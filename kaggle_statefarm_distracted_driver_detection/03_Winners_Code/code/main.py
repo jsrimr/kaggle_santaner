@@ -59,7 +59,7 @@ def get_model():
         exit()
 
     # freeze layers if fine-tuning
-    if args.weights is None:
+    if args.weights is not None:
         for layer in base_model.layers:
             layer.trainable = False
 

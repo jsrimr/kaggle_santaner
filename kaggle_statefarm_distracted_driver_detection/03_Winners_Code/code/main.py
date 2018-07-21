@@ -44,30 +44,31 @@ if args.semi_train is not None:
 test_path = '../input/test'
 labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
 
+def get_model():
+    print('# Define Model')
+    if args.weights == 'None':
+        args.weights = None
+    if args.model in ['vgg16']:
+        base_model = keras.applications.vgg16.VGG16(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
+    elif args.model in ['vgg19']:
+        base_model = keras.applications.vgg19.VGG19(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
+    elif args.model in ['resnet50']:
+        base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
+    else:
+        print('# {} is not a valid value for "--model"'.format(args.model))
+        exit()
+    out = Flatten()(base_model.output)
+    out = Dense(fc_size, activation='relu')(out)
+    out = Dropout(0.5)(out)
+    out = Dense(fc_size, activation='relu')(out)
+    out = Dropout(0.5)(out)
 
-print('# Define Model')
-if args.weights == 'None':
-    args.weights = None
-if args.model in ['vgg16']:
-    base_model = keras.applications.vgg16.VGG16(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-elif args.model in ['vgg19']:
-    base_model = keras.applications.vgg19.VGG19(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-elif args.model in ['resnet50']:
-    base_model = keras.applications.resnet50.ResNet50(include_top=False, weights=args.weights, input_shape=(img_row_size, img_col_size,3))
-else:
-    print('# {} is not a valid value for "--model"'.format(args.model))
-    exit()
-out = Flatten()(base_model.output)
-out = Dense(fc_size, activation='relu')(out)
-out = Dropout(0.5)(out)
-out = Dense(fc_size, activation='relu')(out)
-out = Dropout(0.5)(out)
+    output = Dense(n_class, activation='softmax')(out)
+    model = Model(inputs=base_model.input, outputs=output)
 
-output = Dense(n_class, activation='softmax')(out)
-model = Model(inputs=base_model.input, outputs=output)
-
-sgd = SGD(lr=args.learning_rate, decay=1e-6, momentum=0.9, nesterov=True)
-model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
+    sgd = SGD(lr=args.learning_rate, decay=1e-6, momentum=0.9, nesterov=True)
+    model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
 
 from glob import glob
 import numpy as np
@@ -220,6 +221,7 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     weight_path = '../cache/{}/mini_weight.fold_{}.h5'.format(suffix, i)
     callbacks = [EarlyStopping(monitor='val_loss', patience=3, verbose=0),
             ModelCheckpoint(weight_path, monitor='val_loss', save_best_only=True, verbose=0)]
+    model = get_model()
     model.fit_generator(
             train_generator,
             steps_per_epoch=train_samples/args.batch_size,

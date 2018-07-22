@@ -58,10 +58,12 @@ def get_model():
         print('# {} is not a valid value for "--model"'.format(args.model))
         exit()
 
+    '''
     # freeze layers if fine-tuning
     if args.weights is not None:
         for layer in base_model.layers:
             layer.trainable = False
+    '''
 
     out = Flatten()(base_model.output)
     out = Dense(fc_size, activation='relu')(out)
@@ -125,7 +127,7 @@ def generate_driver_based_split(img_to_driver, train_drivers):
 
     train_samples = 0
     valid_samples = 0
-    if not args.random_split or args.semi_train is None:
+    if not args.random_split:
         # iterate over 'img_to_driver' dict for each image and its path
         for img_path in img_to_driver.keys():
             cmd = 'cp {}/{}/{} {}/{}/{}'
@@ -210,6 +212,7 @@ kf = KFold(len(uniq_drivers), n_folds=nfolds, shuffle=True, random_state=20)
 for i, (train_drivers, valid_drivers) in enumerate(kf):
     train_drivers = [uniq_drivers[j] for j in train_drivers]
 
+    model = get_model()
     train_samples, valid_samples = generate_driver_based_split(img_to_driver, train_drivers)
 
     train_generator = datagen.flow_from_directory(
@@ -228,7 +231,6 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     weight_path = '../cache/{}/mini_weight.fold_{}.h5'.format(suffix, i)
     callbacks = [EarlyStopping(monitor='val_loss', patience=3, verbose=0),
             ModelCheckpoint(weight_path, monitor='val_loss', save_best_only=True, verbose=0)]
-    model = get_model()
     model.fit_generator(
             train_generator,
             steps_per_epoch=train_samples/args.batch_size,

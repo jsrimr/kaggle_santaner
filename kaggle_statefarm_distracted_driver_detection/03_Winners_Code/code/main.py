@@ -17,7 +17,7 @@ import scipy.misc
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=False, default='vgg16', help='Model Architecture')
 parser.add_argument('--weights', required=False, default='imagenet')
-parser.add_argument('--learning-rate', required=False, type=float, default=1e-4)
+parser.add_argument('--learning-rate', required=False, type=float, default=1e-3)
 parser.add_argument('--semi-train', required=False, default=None)
 parser.add_argument('--row-size', required=False, type=int, default=224)
 parser.add_argument('--col-size', required=False, type=int, default=224)
@@ -74,6 +74,7 @@ def get_model():
 
     sgd = SGD(lr=args.learning_rate, decay=1e-6, momentum=0.9, nesterov=True)
     model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
+    print(model.summary())
     return model
 
 from glob import glob

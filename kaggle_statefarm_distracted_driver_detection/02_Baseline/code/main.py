@@ -122,7 +122,7 @@ for fold in range(nfolds):
             class_mode='categorical',
             seed=seed)
 
-    weight_path = '../cache/{}/mini_weight.fold_{}.h5'.format(suffix, i)
+    weight_path = '../cache/vgg16.baseline/weight.fold_{}.h5'.format(fold)
     callbacks = [EarlyStopping(monitor='val_loss', patience=3, verbose=0),
             ModelCheckpoint(weight_path, monitor='val_loss', save_best_only=True, verbose=0)]
     # 모델을 학습한다. val_loss 값이 3 epoch 연속 개악되면, 학습을 멈추고 최적 weight를 저장한다

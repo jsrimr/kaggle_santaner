@@ -30,12 +30,19 @@ train_path = '../../03_Winners_Code/input/train'
 test_path = '../../03_Winners_Code/input/test'
 seed = 10
 labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
-os.mkdir('../cache/vgg16.baseline')
-os.mkdir('../subm/vgg16.baseline')
+
+cache = '../cache/vgg16.baseline'
+if os.path.exists(cache):
+    shutil.rmtree(cache)
+os.mkdir(cache)
+subm = '../subm/vgg16.baseline'
+if os.path.exists(subm):
+    shutil.rmtree(subm)
+os.mkdir(subm)
 
 def get_model():
     # 최상위 전결층을 제외한 vgg16 모델을 불러온다
-    base_model = keras.applications.vgg16.VGG16(include_top=False, weights=args.weights, input_shape=(img_row_size,img_col_size,3))
+    base_model = keras.applications.vgg16.VGG16(include_top=False, weights=None, input_shape=(img_row_size,img_col_size,3))
 
     # 최상위 전결층을 정의한다
     out = Flatten()(base_model.output)

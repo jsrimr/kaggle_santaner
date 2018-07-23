@@ -61,7 +61,6 @@ def get_model():
 def generate_split():
     # 이미지 생성기를 위하여 임시 훈련/검증 폴더를 생성한다
     def _generate_temp_folder(root_path):
-        os.mkdir(root_path)
         for i in range(n_class):
             os.mkdir('{}/c{}'.format(root_path, i))
     _generate_temp_folder(temp_train_fold)

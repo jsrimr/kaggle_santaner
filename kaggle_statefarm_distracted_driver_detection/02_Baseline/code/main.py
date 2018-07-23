@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 # 딥러닝 관련 Keras 라이브러리
 import keras
 from keras.layers.core import Dense, Dropout, Activation, Flatten

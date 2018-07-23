@@ -7,18 +7,16 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, Callback
 from keras.preprocessing.image import ImageDataGenerator
 
 # File I/O 
-import argparse
 import subprocess
 import shutil
 import os
 from glob import glob
 
-# 데이터 처리 및 교차 검증 K-Fold
+# 데이터 처리
 import pandas as pd
 import numpy as np
-from sklearn.cross_validation import KFold
 
-# set parameters
+# 학습 파라미터를 설정한다
 nfolds = 5
 n_class = 10
 fc_size = 2048
@@ -26,8 +24,8 @@ batch_size = 8
 img_row_size, img_col_size = 224, 224
 temp_train_fold = '../input/temp_train'
 temp_valid_fold = '../input/temp_valid'
-train_path = '../input/train'
-test_path = '../input/test'
+train_path = '../../03_Winners_Code/input/train'
+test_path = '../../03_Winners_Code/input/test'
 seed = 10
 labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
 os.mkdir('../cache/vgg16.baseline')
@@ -52,7 +50,7 @@ def get_model():
     return model
 
 def generate_split():
-    # make temp folder for train
+    # 이미지 생성기를 위하여 임시 훈련/검증 폴더를 생성한다
     def _generate_temp_folder(root_path):
         os.mkdir(root_path)
         for i in range(n_class):
@@ -60,22 +58,25 @@ def generate_split():
     _generate_temp_folder(temp_train_fold)
     _generate_temp_folder(temp_valid_fold)
 
+    # 임시 훈련/검증 폴더에 데이터를 랜덤하게 복사한다
     train_samples = 0
     valid_samples = 0
     for label in labels:
         files = glob('{}/{}/*jpg'.format(train_path, label))
         for fl in files:
             cmd = 'cp {} {}/{}/{}'
+            # 데이터의 4/5를 훈련 데이터에 추가한다
             if np.random.randint(nfolds) != 1:
                 cmd = cmd.format(fl, temp_train_fold, label, os.path.basename(fl))
                 train_samples += 1
+            # 데이터의 1/5를 검증 데이터에 추가한다
             else:
                 cmd = cmd.format(fl, temp_valid_fold, label, os.path.basename(fl))
                 valid_samples += 1
-            # copy image
+            # 원본 훈련 데이터를 임시 훈련/검증 데이터에 복사한다
             subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
 
-    # show stat
+    # 훈련/검증 데이터 개수를 출력한다
     print('# {} train samples | {} valid samples'.format(train_samples, valid_samples))
     return train_samples, valid_samples
 
@@ -115,7 +116,7 @@ for fold in range(nfolds):
     weight_path = '../cache/{}/mini_weight.fold_{}.h5'.format(suffix, i)
     callbacks = [EarlyStopping(monitor='val_loss', patience=3, verbose=0),
             ModelCheckpoint(weight_path, monitor='val_loss', save_best_only=True, verbose=0)]
-    # 모델을 학습한다. val_loss 값이 3 epoch 연속 개악되면, 학습을 멈추고 최적 weight를 저장한
+    # 모델을 학습한다. val_loss 값이 3 epoch 연속 개악되면, 학습을 멈추고 최적 weight를 저장한다
     model.fit_generator(
             train_generator,
             steps_per_epoch=train_samples/args.batch_size,

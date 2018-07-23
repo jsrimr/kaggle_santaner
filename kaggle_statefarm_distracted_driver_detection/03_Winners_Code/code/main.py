@@ -26,7 +26,7 @@ parser.add_argument('--random-split', required=False, type=int, default=0)
 parser.add_argument('--data-augment', required=False, type=int, default=1)
 args = parser.parse_args()
 
-fc_size = 1024
+fc_size = 2048
 n_class = 10
 seed = 10
 nfolds = 5
@@ -147,12 +147,12 @@ def generate_driver_based_split(img_to_driver, train_drivers):
         for label in labels:
             files = glob('{}/{}/*jpg'.format(train_path, label))
             for fl in files:
-        	cmd = 'cp {} {}/{}/'
+        	cmd = 'cp {} {}/{}/{}'
                 if np.random.randint(nfolds) != 1:
-                    cmd = cmd.format(fl, temp_train_fold, label)
+                    cmd = cmd.format(fl, temp_train_fold, label, os.path.basename(fl))
                     train_samples += 1
                 else:
-                    cmd = cmd.format(fl, temp_valid_fold, label)
+                    cmd = cmd.format(fl, temp_valid_fold, label, os.path.basename(fl))
                     valid_samples += 1
                 # copy image
                 subprocess.call(cmd, stderr=subprocess.STDOUT, shell=True)
@@ -172,19 +172,19 @@ def preprocess(image):
     image /= 255.
 
     # rotate
-    rotate_angle = np.random.randint(60) - 30
+    rotate_angle = np.random.randint(40) - 20
     image = rotate(image, rotate_angle)
 
     # translate
     rows, cols, _ = image.shape
-    width_translate = np.random.randint(100) - 50
-    height_translate = np.random.randint(100) - 50
+    width_translate = np.random.randint(60) - 30
+    height_translate = np.random.randint(60) - 30
     M = np.float32([[1,0,width_translate],[0,1,height_translate]])
     image = cv2.warpAffine(image,M,(cols,rows))    
 
     # zoom
-    width_zoom = int(img_row_size * (0.7 + 0.3 * (1 - np.random.random())))
-    height_zoom = int(img_col_size * (0.7 + 0.3 * (1 - np.random.random())))
+    width_zoom = int(img_row_size * (0.8 + 0.2 * (1 - np.random.random())))
+    height_zoom = int(img_col_size * (0.8 + 0.2 * (1 - np.random.random())))
     final_image = np.zeros((height_zoom, width_zoom, 3))
     final_image[:,:,0] = crop_center(image[:,:,0], width_zoom, height_zoom)
     final_image[:,:,1] = crop_center(image[:,:,1], width_zoom, height_zoom)
@@ -216,13 +216,13 @@ for i, (train_drivers, valid_drivers) in enumerate(kf):
     train_samples, valid_samples = generate_driver_based_split(img_to_driver, train_drivers)
 
     train_generator = datagen.flow_from_directory(
-            temp_train_fold,
+            directory=temp_train_fold,
             target_size=(img_row_size, img_col_size),
             batch_size=args.batch_size,
             class_mode='categorical',
             seed=seed)
     valid_generator = datagen.flow_from_directory(
-            temp_valid_fold,
+            directory=temp_valid_fold,
             target_size=(img_row_size, img_col_size),
             batch_size=args.batch_size,
             class_mode='categorical',

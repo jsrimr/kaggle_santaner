@@ -23,6 +23,8 @@ from sklearn.cross_validation import KFold
 
 # 이미지 처리
 import cv2
+from scipy.ndimage import rotate
+import scipy.misc
 
 # 학습 파라미터를 설정한다
 parser = argparse.ArgumentParser()
@@ -41,8 +43,8 @@ seed = 10
 nfolds = 5
 test_nfolds = 3
 img_row_size, img_col_size = 224, 224
-train_path = '../input/small_train'
-test_path = '../input/small_test'
+train_path = '../input/train'
+test_path = '../input/test'
 labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
 
 suffix = 'm{}.w{}.lr{}.s{}.nf{}.semi{}.b{}.row{}col{}.rsplit{}.augment{}.d{}'.format(args.model, args.weights, args.learning_rate, seed, nfolds, args.semi_train, args.batch_size, img_row_size, img_col_size, args.random_split, args.data_augment, datetime.now().strftime("%Y-%m-%d-%H-%M"))

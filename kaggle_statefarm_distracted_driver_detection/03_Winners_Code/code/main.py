@@ -1,4 +1,4 @@
-# -*- encoding : utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # 딥러닝 관련 Keras 라이브러리
 import keras
@@ -41,8 +41,8 @@ seed = 10
 nfolds = 5
 test_nfolds = 3
 img_row_size, img_col_size = 224, 224
-train_path = '../input/train'
-test_path = '../input/test'
+train_path = '../input/small_train'
+test_path = '../input/small_test'
 labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
 
 suffix = 'm{}.w{}.lr{}.s{}.nf{}.semi{}.b{}.row{}col{}.rsplit{}.augment{}.d{}'.format(args.model, args.weights, args.learning_rate, seed, nfolds, args.semi_train, args.batch_size, img_row_size, img_col_size, args.random_split, args.data_augment, datetime.now().strftime("%Y-%m-%d-%H-%M"))
@@ -258,7 +258,7 @@ for fold, (train_drivers, valid_drivers) in enumerate(kf):
 
     # 캐글에 제출한다
     submit_cmd = 'kaggle competitions submit -c state-farm-distracted-driver-detection -f {} -m {}.fold{}'.format(sub_file, suffix, fold)
-    subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)
+    #subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)
 
     # 5-Fold 교차 검증 과정에서 생성한 훈련/검증 데이터를 삭제한다
     shutil.rmtree(temp_train_fold)
@@ -276,4 +276,4 @@ ensemble.to_csv(sub_file, index=False)
 
 # 캐글에 제출한다
 submit_cmd = 'kaggle competitions submit -c state-farm-distracted-driver-detection -f {} -m {}'.format(sub_file, suffix)
-subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)
+#subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)

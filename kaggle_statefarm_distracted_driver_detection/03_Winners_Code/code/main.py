@@ -260,7 +260,7 @@ for fold, (train_drivers, valid_drivers) in enumerate(kf):
 
     # 캐글에 제출한다
     submit_cmd = 'kaggle competitions submit -c state-farm-distracted-driver-detection -f {} -m {}.fold{}'.format(sub_file, suffix, fold)
-    #subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)
+    subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)
 
     # 5-Fold 교차 검증 과정에서 생성한 훈련/검증 데이터를 삭제한다
     shutil.rmtree(temp_train_fold)
@@ -278,4 +278,4 @@ ensemble.to_csv(sub_file, index=False)
 
 # 캐글에 제출한다
 submit_cmd = 'kaggle competitions submit -c state-farm-distracted-driver-detection -f {} -m {}'.format(sub_file, suffix)
-#subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)
+subprocess.call(submit_cmd, stderr=subprocess.STDOUT, shell=True)

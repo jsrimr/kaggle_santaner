@@ -17,7 +17,6 @@ print('=' * 50)
 threshold = 0.5
 count = {}
 print('# Extracting data with threshold : {}'.format(threshold))
-os.mkdir('semi_train_{}'.format(os.path.basename(test_pred_fname)))
 cmd = 'cp -r input/train input/semi_train_{}'.format(os.path.basename(test_pred_fname))
 os.system(cmd)
 for i, row in test_pred.iterrows():

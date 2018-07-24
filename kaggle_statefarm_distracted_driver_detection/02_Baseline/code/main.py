@@ -61,6 +61,7 @@ def get_model():
 def generate_split():
     # 이미지 생성기를 위하여 임시 훈련/검증 폴더를 생성한다
     def _generate_temp_folder(root_path):
+        _clear_dir(root_path)
         for i in range(n_class):
             os.mkdir('{}/c{}'.format(root_path, i))
     _generate_temp_folder(temp_train_fold)
@@ -127,10 +128,10 @@ for fold in range(nfolds):
     # 모델을 학습한다. val_loss 값이 3 epoch 연속 개악되면, 학습을 멈추고 최적 weight를 저장한다
     model.fit_generator(
             train_generator,
-            steps_per_epoch=train_samples/args.batch_size,
+            steps_per_epoch=train_samples/batch_size,
             epochs=500,
             validation_data=valid_generator,
-            validation_steps=valid_samples/args.batch_size,
+            validation_steps=valid_samples/batch_size,
             shuffle=True,
             callbacks=callbacks,
             verbose=1)

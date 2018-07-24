@@ -14,7 +14,7 @@ for thr in range(1,10):
   print('# Thre : {} | count : {} ({}%)'.format(thr, count, 1. * count / len(test_pred_probs_max)))
 
 print('=' * 50)
-threshold = 0.7
+threshold = 0.5
 count = {}
 print('# Extracting data with threshold : {}'.format(threshold))
 os.mkdir('semi_train_{}'.format(os.path.basename(test_pred_fname)))

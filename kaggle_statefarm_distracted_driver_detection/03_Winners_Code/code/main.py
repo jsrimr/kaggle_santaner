@@ -44,6 +44,9 @@ nfolds = 5
 test_nfolds = 3
 img_row_size, img_col_size = 224, 224
 train_path = '../input/train'
+if args.semi_train is not None:
+    train_path = args.semi_train
+    args.semi_train = True
 test_path = '../input/test'
 labels = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
 

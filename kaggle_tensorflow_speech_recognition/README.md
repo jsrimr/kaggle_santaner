@@ -23,10 +23,8 @@ nohup jupyter notebook &
 ```
 cd 02_Baseline
 
-# input/ 폴더에 경진대회 데이터를 넣는다
-cd code
-
 # Baseline 모델 실행
+python prepare.py
 python trainer.py
 ```
 
@@ -34,9 +32,6 @@ python trainer.py
 
 ```
 cd ../03_Winners_Code
-
-# input/ 폴더에 경진대회 데이터를 넣는다
-cd code
 
 # 승자의 코드 재현
 python train.py

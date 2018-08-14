@@ -1,11 +1,15 @@
 # 데이터 탐색적 분석
 
 ```
-# jupyter notebook 설치하기
-pip install jupyter
+# (Optional) 가상환경 설치하기
+pip install virtualenv
+# 가상환경 생성하기
+virtualenv venv
+# 가상환경 활성화하기
+. venv/bin/activate
 
-# jupyter notebook 실행하기
-jupyter notebook
+# 필요한 라이브러리 설치하기
+pip install -r requirements.txt
 
 # jupyter notebook 백그라운드에서 실행하기
 nohup jupyter notebook &
@@ -19,12 +23,7 @@ nohup jupyter notebook &
 ```
 cd 02_Baseline
 
-# 필요한 라이브러리 설치
-pip install -r requirements.txt
-
 # input/ 폴더에 경진대회 데이터를 넣는다
-..
-
 cd code
 
 # Baseline 모델 실행
@@ -36,12 +35,7 @@ python trainer.py
 ```
 cd ../03_Winners_Code
 
-# 필요한 라이브러리 설치
-pip install -r requirements.txt
-
 # input/ 폴더에 경진대회 데이터를 넣는다
-..
-
 cd code
 
 # 승자의 코드 재현

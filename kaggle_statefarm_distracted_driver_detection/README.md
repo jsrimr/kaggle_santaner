@@ -26,6 +26,9 @@ cd 02_Baseline
 # input/ 폴더에 경진대회 데이터를 넣는다
 cd code
 
+## 01. Baseline 모델
+python main.py
+
 # 개선 실험 재현
 ## 02. 운전자별 교차 검증
 python main.py --weights None --random-split 0 --data-augment 0 --learning-rate 1e-4

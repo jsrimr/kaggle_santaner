@@ -29,12 +29,12 @@ import scipy.misc
 # 학습 파라미터를 설정한다
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=False, default='vgg16', help='Model Architecture')
-parser.add_argument('--weights', required=False, default='imagenet')
-parser.add_argument('--learning-rate', required=False, type=float, default=1e-3)
+parser.add_argument('--weights', required=False, default='None')
+parser.add_argument('--learning-rate', required=False, type=float, default=1e-4)
 parser.add_argument('--semi-train', required=False, default=None)
 parser.add_argument('--batch-size', required=False, type=int, default=8)
-parser.add_argument('--random-split', required=False, type=int, default=0)
-parser.add_argument('--data-augment', required=False, type=int, default=1)
+parser.add_argument('--random-split', required=False, type=int, default=1)
+parser.add_argument('--data-augment', required=False, type=int, default=0)
 args = parser.parse_args()
 
 fc_size = 2048

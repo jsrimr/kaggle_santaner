@@ -150,7 +150,7 @@ def make_prev_df(train_df, step):
 def load_data():
     # “데이터 준비”에서 통합한 데이터를 읽어온다
     fname = "../input/8th.clean.all.csv"
-    train_df = pd.read_csv(fname, dtype=dtypes)
+    train_df = pd.read_csv(fname)
 
     # products는 util.py에서 정의한 24개의 금융 제품이름이다
     # 결측값을 0.0으로 대체하고, 정수형으로 변환한다
@@ -248,7 +248,7 @@ def make_submission(f, Y_test, C):
     # 상위 7개 예측값을 반환한다
     return Y_ret
 
-
+import time
 def train_predict(all_df, features, prod_features, str_date, cv):
     # all_df : 통합 데이터
     # features : 학습에 사용할 변수
@@ -259,7 +259,10 @@ def train_predict(all_df, features, prod_features, str_date, cv):
     # str_date로 예측 결과물을 산출하는 날짜를 지정한다
     test_date = date_to_int(str_date)
     # 훈련 데이터는 test_date 이전의 모든 데이터를 사용한다
-    train_df = all_df[all_df.int_date < test_date]
+    print("처음의 row개수는 ",all_df.shape[0])
+    train_df = all_df[(all_df.int_date == test_date - 12)]
+    print("나중의 row개수는 ", train_df.shape[0])
+    time.sleep(2)
     # 테스트 데이터를 통합 데이터에서 분리한다
     test_df = pd.DataFrame(all_df[all_df.int_date == test_date])
 
@@ -333,7 +336,7 @@ def train_predict(all_df, features, prod_features, str_date, cv):
 
     # LightGBM 모델 학습 후, 예측 결과물을 저장한다
     Y_test_lgbm = engines.lightgbm(XY_train, XY_validate, test_df, features, XY_all = XY, restore = (str_date == "2016-06-28"))
-    test_add_list_lightgbm = make_submission(io.BytesIO() if cv else gzip.open("tmp/%s.lightgbm.csv.gz" % str_date, "wb"), Y_test_lgbm - Y_prev, C)
+    test_add_list_lightgbm = make_submission(io.BytesIO() if cv else gzip.open("%s.lightgbm.csv.gz" % str_date, "wb"), Y_test_lgbm - Y_prev, C)
 
     # 교차 검증일 경우, LightGBM 모델의 테스트 데이터 MAP@7 평가 척도를 출력한다
     if cv:
@@ -342,7 +345,7 @@ def train_predict(all_df, features, prod_features, str_date, cv):
 
     # XGBoost 모델 학습 후, 예측 결과물을 저장한다
     Y_test_xgb = engines.xgboost(XY_train, XY_validate, test_df, features, XY_all = XY, restore = (str_date == "2016-06-28"))
-    test_add_list_xgboost = make_submission(io.BytesIO() if cv else gzip.open("tmp/%s.xgboost.csv.gz" % str_date, "wb"), Y_test_xgb - Y_prev, C)
+    test_add_list_xgboost = make_submission(io.BytesIO() if cv else gzip.open("%s.xgboost.csv.gz" % str_date, "wb"), Y_test_xgb - Y_prev, C)
 
     # 교차 검증일 경우, XGBoost 모델의 테스트 데이터 MAP@7 평가 척도를 출력한다
     if cv:
@@ -352,7 +355,7 @@ def train_predict(all_df, features, prod_features, str_date, cv):
     # 곱셈 후, 제곱근을 구하는 방식으로 앙상블을 수행한다
     Y_test = np.sqrt(np.multiply(Y_test_xgb, Y_test_lgbm))
     # 앙상블 결과물을 저장하고, 테스트 데이터에 대한 MAP@7 를 출력한다
-    test_add_list_xl = make_submission(io.BytesIO() if cv else gzip.open("tmp/%s.xgboost-lightgbm.csv.gz" % str_date, "wb"), Y_test - Y_prev, C)
+    test_add_list_xl = make_submission(io.BytesIO() if cv else gzip.open("%s.xgboost-lightgbm.csv.gz" % str_date, "wb"), Y_test - Y_prev, C)
 
     # 정답값인 test_add_list와 앙상블 모델의 예측값을 mapk 함수에 넣어, 평가 척도 점수를 확인한다
     if cv:
@@ -360,14 +363,23 @@ def train_predict(all_df, features, prod_features, str_date, cv):
         print("XGBoost+LightGBM MAP@7", str_date, map7xl, map7xl*map7coef)
 
 
-
+import os
 
 if __name__ == "__main__":
-    all_df, features, prod_features = make_data()
-    
-    # 피쳐 엔지니어링이 완료된 데이터를 저장한다
-    train_df.to_pickle("../input/8th.feature_engineer.all.pkl")
-    pickle.dump((features, prod_features), open("../input/8th.feature_engineer.cv_meta.pkl", "wb"))
+    if os.path.exists("../input/8th.feature_engineer.all.pkl"):
+        with open("../input/8th.feature_engineer.all.pkl", 'rb') as f:
+            all_df = pickle.load(f)
 
+        with open("../input/8th.feature_engineer.cv_meta.pkl", "rb") as f:
+            features, prod_features = pickle.load(f)
+
+        print("presaved df and features are loaded!")
+    else:
+        all_df, features, prod_features = make_data()
+        # 피쳐 엔지니어링이 완료된 데이터를 저장한다
+        all_df.to_pickle("../input/8th.feature_engineer.all.pkl")
+        pickle.dump((features, prod_features), open("../input/8th.feature_engineer.cv_meta.pkl", "wb"))
+
+        print("no presaved file exists. start from scratch")
     train_predict(all_df, features, prod_features, "2016-05-28", cv=True)
     train_predict(all_df, features, prod_features, "2016-06-28", cv=False)
